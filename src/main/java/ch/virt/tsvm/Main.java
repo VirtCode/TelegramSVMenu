@@ -16,24 +16,28 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
+ * This is the main class of this project.
+ * Here is where the magic happens.
  * @author VirtCode
  * @version 1.0
  */
 public class Main extends TelegramLongPollingBot {
 
-    public static final String PREFIX = "[MenuBot] ";
+    public static final String TAG = "[MenuBot] ";
 
-    private String currentMenuString;
-
-    private Timer timer;
     private Restaurant restaurant;
+    private Timer timer;
     private Data data;
+    private Translation translation;
 
     public static void main(String[] args) {
         create();
     }
-
-    public static Main create(){
+    /**
+     * Creates and registers the bot
+     * Then starts it
+     */
+    public static void create(){
         ApiContextInitializer.init();
 
         TelegramBotsApi botsApi = new TelegramBotsApi();
@@ -42,160 +46,69 @@ public class Main extends TelegramLongPollingBot {
         try {
             botsApi.registerBot(bot);
         } catch (TelegramApiRequestException e) {
-            System.err.println(PREFIX + "Failed to register Telegram Bot");
+            System.err.println(TAG + "Failed to register Telegram Bot");
         }
 
-        System.out.println(PREFIX + "Registered Menubot successfully!");
-        return bot;
+        System.out.println(TAG + "Registered Telegram Bot successfully!");
     }
-
+    /**
+     * Starts the bot
+     */
     public Main(){
         data = Data.read();
         data.save();
-        if (data.getRestaurantSubDomain() == null || data.getToken() == null || data.getUsername() == null){
+
+        if (data.getRestaurantSubDomain() == null || data.getBotToken() == null || data.getBotUsername() == null){
             System.err.println("You need to fill out the bot and restaurant credentials in order to use this bot!");
             System.exit(0);
         }
+
+        if (data.isUseCustomStrings()) translation = Translation.read();
+        else translation = new Translation();
+
         this.timer = new Timer();
+
         restaurant = new Restaurant(data.getRestaurantSubDomain());
 
-        fetchMenu();
+        fetchMenu(0, Calendar.getInstance().getTime());
 
         Date now = Calendar.getInstance().getTime();
-        scheduleSending(new Date(now.getYear(), now.getMonth(), now.getDate() + 1, 8, 0, 0));
+        scheduleSending(new Date(now.getYear(), now.getMonth(), now.getDate() + 1, data.getSchedulingHour(), 0, 0));
     }
 
-    private void sendMessage(String message, long group){
-        try {
-            execute(new SendMessage(group, message));
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void processCommand(String command, Long group){
-        switch (command.toLowerCase()){
-            case "start":
-                sendMessage("Hey there! Use /subscribe to subscribe to the Menu notifications. For other Stuff use /help!", group);
-                break;
-            case "subscribe":
-                if (data.isSubscribed(group))  sendMessage("You are already subscribed to the Menu notifications. Use  /unsubscribe to unsubscribe from the notifications.", group);
-                else {
-                    data.addSubscription(group);
-                    data.save();
-                    sendMessage("You are now successfully subscribed to the Menu notifications.", group);
-                }
-                break;
-            case "unsubscribe":
-                if (data.isSubscribed(group)){
-                    data.removeSubscription(group);
-                    data.save();
-                    sendMessage("You are not subscribed to the Menu notifications anymore.", group);
-                }else   sendMessage("You are not subscribed to the Menu notifications. Use /subscribe to subscribe to it.", group);
-                break;
-            case "menu":
-                printMenu(group);
-                break;
-            case "info":
-                printInfo(group);
-                break;
-            case "about":
-                printAbout(group);
-                break;
-            case "help":
-                sendMessage("The Following commands are Supported: \n" +
-                        "  /help\n" +
-                        "    Display this Message.\n" +
-                        "  /start\n" +
-                        "    Display the start Message.\n" +
-                        "  /subscribe\n" +
-                        "    Subscribe to the Menu notifications.\n" +
-                        "  /unsubscribe\n" +
-                        "    Unsubscribe from the Menu notifications.\n" +
-                        "  /menu\n" +
-                        "    Get the current Menu\n" +
-                        "  /info\n" +
-                        "    Get info about the Restaurant the bot is linked to\n" +
-                        "  /about\n" +
-                        "    Get info about this bot and its creators", group);
-                break;
-        }
-    }
-
-    private void fetchMenu(){
-        try {
-            restaurant.fetchMenues();
-            MenuDay day = restaurant.getMenuWeek().getDays()[0];
-            StringBuilder sb = new StringBuilder();
-            sb.append("Today, the following menues are available:\n");
-            for (Menu menue : day.getMenues()) {
-                sb.append("\n");
-                sb.append(convertMenu(menue));
-            }
-            this.currentMenuString = sb.toString();
-        } catch (IOException e) {
-            System.out.println(PREFIX + "Failed to fetch the new Menues!");
-            e.printStackTrace();
-        }
-
-    }
-
-    private void printInfo(long group){
-        try {
-            restaurant.fetchData();
-            StringBuilder sb = new StringBuilder();
-            sb.append("This bot is linked to ");
-            sb.append(restaurant.getName());
-            sb.append("\n");
-            sb.append("You find the real menuplan at:\n");
-            sb.append("  ");
-            sb.append(restaurant.getSubdomain());
-            sb.append(".sv-restaurant.ch");
-            sendMessage(sb.toString(), group);
-        } catch (IOException e) {
-            sendMessage("Sorry but an internal Error occurred!", group);
-            e.printStackTrace();
-        }
-    }
-
-    private void printAbout(long group){
-        String s = "This bot and its sv restaurant API was programmed by: \n" +
-                "  Virt - https://github.com/VirtCode\n" +
-                "and was inspired by: \n" +
-                "  _WhySoBad - https://github.com/WhySoBad";
-        sendMessage(s, group);
-    }
-
-    private void printMenu(long group){
-        sendMessage(currentMenuString, group);
-    }
-
-    private String convertMenu(Menu menu){
-        StringBuilder sb = new StringBuilder();
-        sb.append("  " + menu.getTitle() + "\n");
-        sb.append("    " + menu.getIngredients() + "\n");
-        sb.append("    Additional: " + menu.getAdditionalInfo() + "\n");
-        sb.append("    Is Vegetarian: " + menu.isVegetarian() + "\n");
-        return sb.toString();
-    }
-
+    /**
+     * Schedules the next Menu notification
+     * @param when when to send it
+     */
     private void scheduleSending(Date when) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd - hh:mm:ss");
-        System.out.println(PREFIX + "Scheduling next Sending at: " + format.format(when));
+        System.out.println(TAG + "Scheduling next Sending at: " + format.format(when));
 
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                System.out.println(PREFIX + "Running next Sending");
+                System.out.println(TAG + "Running next Sending");
+                String menues = fetchMenu(0, Calendar.getInstance().getTime());
+                for (String s : data.getMenuBlacklist()) {
+                    if (menues.toLowerCase().contains(s.toLowerCase())) {
+                        Date nextTarget = incrementDay(when);
+                        scheduleSending(nextTarget);
+                        return;
+                    }
+                }
                 for (Long subscription : data.getSubscriptions()) {
-                    printMenu(subscription);
+                    sendMessage(menues, subscription);
                 }
                 Date nextTarget = incrementDay(when);
                 scheduleSending(nextTarget);
             }
         }, when);
     }
-
+    /**
+     * Increments the given date
+     * @param day date to increment
+     * @return incremented date
+     */
     private Date incrementDay(Date day) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(day);
@@ -204,22 +117,201 @@ public class Main extends TelegramLongPollingBot {
     }
 
     @Override
+    public String getBotUsername() {
+        return data.getBotUsername();
+    }
+    @Override
+    public String getBotToken() {
+        return data.getBotToken();
+    }
+
+    /**
+     * Cleans and sends a message into a group
+     * @param message message to send
+     * @param group group to send in
+     */
+    private void sendMessage(String message, long group){
+        try {
+            execute(new SendMessage(group, cleanString(message)).setParseMode("MarkdownV2"));
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+    /**
+     * Prepares a String for botusage
+     * @param s String to clean
+     * @return cleaned String
+     */
+    private String cleanString(String s){
+        return s.replace(".", "\\.").replace("!", "\\!").replace("-", "\\-");
+    }
+
+    @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String message = update.getMessage().getText();
-            if (message.startsWith("/")){
+            if (message.startsWith(translation.getCommandIndicator())){
                 processCommand(message.substring(1), update.getMessage().getChatId());
             }
         }
     }
 
-    @Override
-    public String getBotUsername() {
-        return data.getUsername();
+    /**
+     * Processes a command sent by the user
+     * @param command command to process
+     * @param group group sent in
+     */
+    public void processCommand(String command, Long group){
+        System.out.println(TAG + "Command " + command + " issued from " + group);
+        switch (command.toLowerCase()){
+            case "start":
+                sendMessage(translation.getStartMessage(), group);
+                break;
+            case "subscribe":
+                if (data.isSubscribed(group))  sendMessage(translation.getSubscribeAlready(), group);
+                else {
+                    data.addSubscription(group);
+                    data.save();
+                    sendMessage(translation.getSubscribeSuccess(), group);
+                }
+                break;
+            case "unsubscribe":
+                if (data.isSubscribed(group)){
+                    data.removeSubscription(group);
+                    data.save();
+                    sendMessage(translation.getUnsubscribeSuccess(), group);
+                }else   sendMessage(translation.getUnsubscribeAlready(), group);
+                break;
+            case "menu":
+                sendMessage(fetchMenu(0, Calendar.getInstance().getTime()), group);
+                break;
+            case "tomorrow":
+                sendMessage(fetchMenu(1, incrementDay(Calendar.getInstance().getTime())), group);
+                break;
+            case "info":
+                printInfo(group);
+                break;
+            case "about":
+                printAbout(group);
+                break;
+            case "host":
+                printHost(group);
+                break;
+            case "help":
+                sendMessage(translation.getHelp(), group);
+                break;
+            case "reload":
+                if (data.isEnableReload()){
+                    data = Data.read();
+                    translation = Translation.read();
+                }
+                break;
+            default: sendMessage(translation.getHelpInstructor(), group);
+        }
     }
 
-    @Override
-    public String getBotToken() {
-        return data.getToken();
+    /**
+     * Fetches a Menu from the site and turns it into a String
+     * @param index index in the menuplan
+     * @param date date to print
+     * @return converted string
+     */
+    private String fetchMenu(int index, Date date){
+        try {
+            restaurant.fetchMenues();
+            MenuDay[] days = restaurant.getMenuWeek().getDays();
+            if (index >= days.length) return translation.getMenuOffline();
+            MenuDay day = days[index];
+            StringBuilder sb = new StringBuilder();
+            sb.append("__");
+            sb.append(new SimpleDateFormat(translation.getMenuDateFormat()).format(date));
+            sb.append("__");
+            int i = 0;
+            for (Menu menue : day.getMenues()) {
+                sb.append(Translation.newLine);
+                sb.append("*");
+                sb.append(data.getMenuName(i));
+                sb.append("*");
+                sb.append(Translation.newLine);
+                sb.append(convertMenu(menue));
+                i++;
+                if (i == data.getMaxMenues()) break;
+            }
+            return sb.toString();
+        } catch (IOException e) {
+            System.out.println(TAG + "Failed to fetch the new Menues!");
+            e.printStackTrace();
+            return translation.getMenuOffline();
+        }
+
     }
+    /**
+     * Converts a Menu to a String
+     * @param menu Menu to convert
+     * @return convertedString
+     */
+    private String convertMenu(Menu menu){
+        StringBuilder sb = new StringBuilder();
+        sb.append(translation.getTabSpaces());
+        sb.append(menu.getTitle());
+        sb.append(Translation.newLine);
+        sb.append(translation.getTabSpaces());
+        sb.append(menu.getIngredients());
+        sb.append(Translation.newLine);
+        if(data.isPrintAdditional()){
+            sb.append(translation.getTabSpaces());
+            sb.append(translation.getMenuAdditional());
+            sb.append(menu.getAdditionalInfo());
+            sb.append(Translation.newLine);
+        }
+        sb.append(translation.getTabSpaces());
+        sb.append(translation.getMenuVegetarian());
+        sb.append(menu.isVegetarian());
+        sb.append(Translation.newLine);
+        return sb.toString();
+    }
+
+    /**
+     * Prints the info message
+     * @param group group to print in
+     */
+    private void printInfo(long group){
+        try {
+            restaurant.fetchData();
+            String sb = translation.getInfoRestaurant() +
+                    restaurant.getName() +
+                    Translation.newLine +
+                    translation.getInfoDomain() +
+                    Translation.newLine +
+                    translation.getTabSpaces() +
+                    restaurant.getSubdomain() +
+                    Restaurant.URL_SUFFIX;
+            sendMessage(sb, group);
+        } catch (IOException e) {
+            sendMessage(translation.getInfoOffline(), group);
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Prints the host message
+     * @param group group to print in
+     */
+    private void printHost(long group){
+        String s = translation.getHostString() + data.getHostString();
+        sendMessage(s, group);
+    }
+
+    /**
+     * Prints the about message
+     * @param group group to print in
+     */
+    private void printAbout(long group){
+        String s = "This bot and its sv restaurant API were programmed by:" + Translation.newLine +
+                "  Virt - https://github.com/VirtCode" + Translation.newLine +
+                "who was inspired by:" + Translation.newLine +
+                "  WhySoBad - https://github.com/WhySoBad";
+        sendMessage(s, group);
+    }
+
 }

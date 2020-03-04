@@ -1,0 +1,14 @@
+{
+  "botToken": "your-bot-token",
+  "botUsername": "your-bot-username",
+  "restaurantSubDomain": "your-sub-domain",
+  "hostString": "",
+  "menuNames": [],
+  "maxMenues": 10,
+  "printAdditional": false,
+  "menuBlacklist": [],
+  "useCustomStrings": false,
+  "schedulingHour": 8,
+  "enableReload": false,
+  "subscriptions": []
+}
