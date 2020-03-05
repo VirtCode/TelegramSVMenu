@@ -47,3 +47,5 @@ You now should also place a file called strings.json next to the data.json (A te
 You now can go and customize those strings as you like.
 For all strings not mentioned in the strings.json file, the default english string will be used. 
 For quick debugging, I suggest enabling the /reload command to reload the strings on runtime.
+# License
+This project is licenced under the MIT Licence. Learn more about it in the LICENCE file.
