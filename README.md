@@ -2,7 +2,7 @@
 This is an easy to use Telegram Bot to make you aware of the current Menu
 ## Disclaimer
 This bot can only be used for restaurants of the SV Group!
-This bot must also be hosted on a device or server.
+This bot must also be hosted on a device or server. Additionally, this bot is a community driven Project and is not associated with the SV-Group itself, nor is it official at any point.
 ## Features
 * Easy to setup
 * User can subscribe to daily notifications of the current menu.
