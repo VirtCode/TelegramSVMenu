@@ -35,7 +35,7 @@ public class Translation {
 
     @Expose private String startMessage = "Hey there! Use /subscribe to subscribe to the Menu notifications. For other Stuff use /help!";
 
-    @Expose private String subscribeAlready = "You are already subscribed to the Menu notifications. Use  /unsubscribe to unsubscribe from the notifications.";
+    @Expose private String subscribeAlready = "You are already subscribed to the Menu notifications. Use /unsubscribe to unsubscribe from the notifications.";
     @Expose private String subscribeSuccess = "You are now successfully subscribed to the Menu notifications.";
 
     @Expose private String unsubscribeAlready = "You are not subscribed to the Menu notifications. Use /subscribe to subscribe to it.";

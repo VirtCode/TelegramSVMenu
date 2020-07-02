@@ -35,6 +35,9 @@ public class Data {
 
     @Expose private boolean enableReload = false;
 
+    @Expose private boolean enableDatabase = false;
+    @Expose private String databaseClientURI = "";
+
     private ArrayList<Long> subscriptions = new ArrayList<>();
 
     public String getBotToken() {
@@ -96,6 +99,14 @@ public class Data {
 
     public boolean isEnableReload() {
         return enableReload;
+    }
+
+    public boolean isEnableDatabase() {
+        return enableDatabase;
+    }
+
+    public String getDatabaseClientURI() {
+        return databaseClientURI;
     }
 
     /**
