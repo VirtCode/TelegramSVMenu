@@ -24,6 +24,7 @@ import java.util.*;
  * @version 1.0
  */
 public class Main extends TelegramLongPollingBot {
+    public static final String VERSION_TAG = "Release 2.0";
 
     public static final String TAG = "[MenuBot] ";
 
@@ -62,10 +63,10 @@ public class Main extends TelegramLongPollingBot {
         data.save();
 
         database = new Database();
-        database.connect(data.getDatabaseClientURI());
+        if(data.isEnableDatabase()) database.connect(data.getDatabaseClientURI());
 
         if (data.getRestaurantSubDomain() == null || data.getBotToken() == null || data.getBotUsername() == null){
-            System.err.println("You need to fill out the bot and restaurant credentials in order to use this bot!");
+            System.err.println(TAG + "You need to fill out the bot and restaurant credentials in order to use this bot!");
             System.exit(0);
         }
 
@@ -95,7 +96,7 @@ public class Main extends TelegramLongPollingBot {
             @Override
             public void run() {
                 System.out.println(TAG + "Running next Sending");
-                String menues = fetchMenu(Calendar.getInstance());
+                String menues = fetchMenu(Calendar.getInstance(), true);
                 for (String s : data.getMenuBlacklist()) {
                     if (menues.toLowerCase().contains(s.toLowerCase())) {
                         scheduleSending(incrementDay(when));
@@ -186,10 +187,10 @@ public class Main extends TelegramLongPollingBot {
                 }else   sendMessage(translation.getUnsubscribeAlready(), group);
                 break;
             case "menu":
-                sendMessage(fetchMenu(Calendar.getInstance()), group);
+                sendMessage(fetchMenu(Calendar.getInstance(), false), group);
                 break;
             case "tomorrow":
-                sendMessage(fetchMenu(incrementDay(Calendar.getInstance())), group);
+                sendMessage(fetchMenu(incrementDay(Calendar.getInstance()), false), group);
                 break;
             case "info":
                 printInfo(group);
@@ -202,6 +203,9 @@ public class Main extends TelegramLongPollingBot {
                 break;
             case "help":
                 sendMessage(translation.getHelp(), group);
+                break;
+            case "version":
+                sendMessage(translation.getVersionPrefix() + VERSION_TAG, group);
                 break;
             case "reload":
                 if (data.isEnableReload()){
@@ -218,12 +222,12 @@ public class Main extends TelegramLongPollingBot {
      * @param date date to print
      * @return converted string
      */
-    private String fetchMenu(Calendar date){
+    private String fetchMenu(Calendar date, boolean daily){
         try {
             restaurant.fetchMenues();
             MenuDay day = restaurant.getMenuWeek().getDay(date.get(Calendar.DATE), date.get(Calendar.MONTH), Calendar.getInstance().get(Calendar.YEAR)); // January = 0
             if (day == null) return translation.getMenuOffline();
-            database.newMenus(date, day);
+            if(daily) database.newMenus(date, day);
             StringBuilder sb = new StringBuilder();
             sb.append("__");
             sb.append(new SimpleDateFormat(translation.getMenuDateFormat()).format(date.getTime()));

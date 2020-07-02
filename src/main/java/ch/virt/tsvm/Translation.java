@@ -32,6 +32,7 @@ public class Translation {
     @Expose private String helpInfo = "Get info about the Restaurant the bot is linked to.";
     @Expose private String helpHost = "Get info about who has set up and is maintaining the bot.";
     @Expose private String helpAbout = "Get info about this bot and its creators.";
+    @Expose private String helpVersion = "Get the version this bot is running on.";
 
     @Expose private String startMessage = "Hey there! Use /subscribe to subscribe to the Menu notifications. For other Stuff use /help!";
 
@@ -50,6 +51,7 @@ public class Translation {
 
     @Expose private String infoRestaurant = "This bot is linked to";
     @Expose private String infoDomain = "You find the real menuplan at:";
+    @Expose private String versionPrefix = "This bot is running on Version: ";
     @Expose private String infoOffline = "Sorry but the restaurant page seems to be offline!";
 
     public String getStartMessage() {
@@ -116,6 +118,10 @@ public class Translation {
         return helpInstructor;
     }
 
+    public String getVersionPrefix() {
+        return versionPrefix;
+    }
+
     public String getHelp(){
         StringBuilder sb = new StringBuilder();
         sb.append(helpHeader);
@@ -127,6 +133,7 @@ public class Translation {
         appendHelpEntry(sb, "tomorrow", helpTomorrow);
         appendHelpEntry(sb, "info", helpInfo);
         appendHelpEntry(sb, "host", helpHost);
+        appendHelpEntry(sb, "version", helpVersion);
         appendHelpEntry(sb, "about", helpAbout);
         return sb.toString();
     }

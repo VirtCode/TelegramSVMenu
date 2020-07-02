@@ -25,10 +25,11 @@ public class Database {
     MongoCollection<Document> menuData;
     MongoCollection<Document> dayData;
 
-    private boolean connected;
+    private boolean connected = false;
 
     public void connect(String uris) {
-        if (uris.equals("")) {
+        System.out.println(TAG + "Trying to connect to the database");
+        if (uris == null || uris.equals("")) {
             System.out.println(TAG + "Please provide a Database access link!");
             connected = false;
             return;
@@ -38,6 +39,7 @@ public class Database {
         database = client.getDatabase(uri.getDatabase());
         createNecessary();
         connected = true;
+        System.out.println(TAG + "Successfully connected to the database");
     }
 
     public void createNecessary() {
@@ -65,6 +67,7 @@ public class Database {
 
     public void newMenus(Calendar when, MenuDay menus) {
         if (!connected) return;
+        System.out.println(TAG + "Inserting new Menus into the database");
         when.set(Calendar.SECOND, 0);
         when.set(Calendar.MINUTE, 0);
         when.set(Calendar.HOUR, 0);

@@ -36,7 +36,7 @@ public class Data {
     @Expose private boolean enableReload = false;
 
     @Expose private boolean enableDatabase = false;
-    @Expose private String databaseClientURI = "";
+    @Expose private String databaseClientURI;
 
     private ArrayList<Long> subscriptions = new ArrayList<>();
 
@@ -127,7 +127,7 @@ public class Data {
                 return new Data();
             }
         }else {
-            System.out.println(TAG + "Do previous saves Found");
+            System.out.println(TAG + "No previous saves Found");
             return new Data();
         }
     }
@@ -139,7 +139,7 @@ public class Data {
         File file = new File(filename);
         try {
             FileWriter fw = new FileWriter(file);
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
             String json = gson.toJson(this);
             fw.write(json);
             fw.close();

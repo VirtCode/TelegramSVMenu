@@ -12,8 +12,9 @@
   "helpInfo": "Get info about the Restaurant the bot is linked to.",
   "helpHost": "Get info about who has set up and is maintaining the bot.",
   "helpAbout": "Get info about this bot and its creators.",
+  "helpVersion": "Get the version this bot is running on.",
   "startMessage": "Hey there! Use /subscribe to subscribe to the Menu notifications. For other Stuff use /help!",
-  "subscribeAlready": "You are already subscribed to the Menu notifications. Use  /unsubscribe to unsubscribe from the notifications.",
+  "subscribeAlready": "You are already subscribed to the Menu notifications. Use /unsubscribe to unsubscribe from the notifications.",
   "subscribeSuccess": "You are now successfully subscribed to the Menu notifications.",
   "unsubscribeAlready": "You are not subscribed to the Menu notifications. Use /subscribe to subscribe to it.",
   "unsubscribeSuccess": "You are not subscribed to the Menu notifications anymore.",
@@ -24,5 +25,6 @@
   "hostString": "This bot has been set up and is maintained by:\n",
   "infoRestaurant": "This bot is linked to",
   "infoDomain": "You find the real menuplan at:",
+  "versionPrefix": "This bot is running on Version: ",
   "infoOffline": "Sorry but the restaurant page seems to be offline!"
 }

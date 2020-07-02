@@ -1,7 +1,7 @@
 {
-  "botToken": "your-bot-token",
-  "botUsername": "your-bot-username",
-  "restaurantSubDomain": "your-sub-domain",
+  "botToken": "<your-bot-token>",
+  "botUsername": "<your-bot-username>",
+  "restaurantSubDomain": "<your-restaurant-subdomain>",
   "hostString": "",
   "menuNames": [],
   "maxMenues": 10,
@@ -10,5 +10,7 @@
   "useCustomStrings": false,
   "schedulingHour": 8,
   "enableReload": false,
+  "enableDatabase": false,
+  "databaseClientURI": "mongodb+srv://<your-database-username>:<your-database-password>@<your-cluster-url-stuff>/<your-database>?retryWrites=true&w=majority",
   "subscriptions": []
 }
