@@ -7,7 +7,9 @@ import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
@@ -22,6 +24,7 @@ import java.util.*;
  * @version 1.0
  */
 public class Main extends TelegramLongPollingBot {
+    public static final String VERSION_TAG = "Release 2.0";
 
     public static final String TAG = "[MenuBot] ";
 
@@ -29,6 +32,7 @@ public class Main extends TelegramLongPollingBot {
     private Timer timer;
     private Data data;
     private Translation translation;
+    private Database database;
 
     public static void main(String[] args) {
         create();
@@ -58,8 +62,11 @@ public class Main extends TelegramLongPollingBot {
         data = Data.read();
         data.save();
 
+        database = new Database();
+        if(data.isEnableDatabase()) database.connect(data.getDatabaseClientURI());
+
         if (data.getRestaurantSubDomain() == null || data.getBotToken() == null || data.getBotUsername() == null){
-            System.err.println("You need to fill out the bot and restaurant credentials in order to use this bot!");
+            System.err.println(TAG + "You need to fill out the bot and restaurant credentials in order to use this bot!");
             System.exit(0);
         }
 
@@ -70,50 +77,47 @@ public class Main extends TelegramLongPollingBot {
 
         restaurant = new Restaurant(data.getRestaurantSubDomain());
 
-        fetchMenu(0, Calendar.getInstance().getTime());
-
-        Date now = Calendar.getInstance().getTime();
-        scheduleSending(new Date(now.getYear(), now.getMonth(), now.getDate() + 1, data.getSchedulingHour(), 0, 0));
+        Calendar now = Calendar.getInstance();
+        now.set(Calendar.HOUR, data.getSchedulingHour());
+        now.set(Calendar.MINUTE, 0);
+        now.set(Calendar.SECOND, 0);
+        scheduleSending(incrementDay(now));
     }
 
     /**
      * Schedules the next Menu notification
      * @param when when to send it
      */
-    private void scheduleSending(Date when) {
+    private void scheduleSending(Calendar when) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd - hh:mm:ss");
-        System.out.println(TAG + "Scheduling next Sending at: " + format.format(when));
+        System.out.println(TAG + "Scheduling next Sending at: " + format.format(when.getTime()));
 
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
                 System.out.println(TAG + "Running next Sending");
-                String menues = fetchMenu(0, Calendar.getInstance().getTime());
+                String menues = fetchMenu(Calendar.getInstance(), true);
                 for (String s : data.getMenuBlacklist()) {
                     if (menues.toLowerCase().contains(s.toLowerCase())) {
-                        Date nextTarget = incrementDay(when);
-                        scheduleSending(nextTarget);
+                        scheduleSending(incrementDay(when));
                         return;
                     }
                 }
                 for (Long subscription : data.getSubscriptions()) {
                     sendMessage(menues, subscription);
                 }
-                Date nextTarget = incrementDay(when);
-                scheduleSending(nextTarget);
+                scheduleSending(incrementDay(when));
             }
-        }, when);
+        }, when.getTime());
     }
     /**
      * Increments the given date
      * @param day date to increment
      * @return incremented date
      */
-    private Date incrementDay(Date day) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(day);
-        cal.add(Calendar.DATE, 1);
-        return cal.getTime();
+    private Calendar incrementDay(Calendar day) {
+        day.add(Calendar.DATE, 1);
+        return day;
     }
 
     @Override
@@ -151,6 +155,7 @@ public class Main extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String message = update.getMessage().getText();
             if (message.startsWith(translation.getCommandIndicator())){
+                System.out.println(TAG + "Command \"" + message.substring(1) + "\" issued from " + update.getMessage().getChat().getFirstName() + "[" + update.getMessage().getChatId() + "]");
                 processCommand(message.substring(1), update.getMessage().getChatId());
             }
         }
@@ -162,7 +167,6 @@ public class Main extends TelegramLongPollingBot {
      * @param group group sent in
      */
     public void processCommand(String command, Long group){
-        System.out.println(TAG + "Command " + command + " issued from " + group);
         switch (command.toLowerCase()){
             case "start":
                 sendMessage(translation.getStartMessage(), group);
@@ -183,10 +187,10 @@ public class Main extends TelegramLongPollingBot {
                 }else   sendMessage(translation.getUnsubscribeAlready(), group);
                 break;
             case "menu":
-                sendMessage(fetchMenu(0, Calendar.getInstance().getTime()), group);
+                sendMessage(fetchMenu(Calendar.getInstance(), false), group);
                 break;
             case "tomorrow":
-                sendMessage(fetchMenu(1, incrementDay(Calendar.getInstance().getTime())), group);
+                sendMessage(fetchMenu(incrementDay(Calendar.getInstance()), false), group);
                 break;
             case "info":
                 printInfo(group);
@@ -200,6 +204,9 @@ public class Main extends TelegramLongPollingBot {
             case "help":
                 sendMessage(translation.getHelp(), group);
                 break;
+            case "version":
+                sendMessage(translation.getVersionPrefix() + VERSION_TAG, group);
+                break;
             case "reload":
                 if (data.isEnableReload()){
                     data = Data.read();
@@ -212,19 +219,18 @@ public class Main extends TelegramLongPollingBot {
 
     /**
      * Fetches a Menu from the site and turns it into a String
-     * @param index index in the menuplan
      * @param date date to print
      * @return converted string
      */
-    private String fetchMenu(int index, Date date){
+    private String fetchMenu(Calendar date, boolean daily){
         try {
             restaurant.fetchMenues();
-            MenuDay[] days = restaurant.getMenuWeek().getDays();
-            if (index >= days.length) return translation.getMenuOffline();
-            MenuDay day = days[index];
+            MenuDay day = restaurant.getMenuWeek().getDay(date.get(Calendar.DATE), date.get(Calendar.MONTH), Calendar.getInstance().get(Calendar.YEAR)); // January = 0
+            if (day == null) return translation.getMenuOffline();
+            if(daily) database.newMenus(date, day);
             StringBuilder sb = new StringBuilder();
             sb.append("__");
-            sb.append(new SimpleDateFormat(translation.getMenuDateFormat()).format(date));
+            sb.append(new SimpleDateFormat(translation.getMenuDateFormat()).format(date.getTime()));
             sb.append("__");
             int i = 0;
             for (Menu menue : day.getMenues()) {
@@ -239,11 +245,9 @@ public class Main extends TelegramLongPollingBot {
             }
             return sb.toString();
         } catch (IOException e) {
-            System.out.println(TAG + "Failed to fetch the new Menues!");
             e.printStackTrace();
             return translation.getMenuOffline();
         }
-
     }
     /**
      * Converts a Menu to a String
