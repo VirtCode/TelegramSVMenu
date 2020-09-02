@@ -162,7 +162,7 @@ public class Main extends TelegramLongPollingBot {
      * @return cleaned String
      */
     private String cleanString(String s){
-        return s.replaceAll("\\.", "\\.").replaceAll("!", "\\!").replaceAll("-", "\\-").replaceAll("\\+", "\\+").replaceAll("_", "\\_").replaceAll("\\*", "\\*");
+        return s.replace(".", "\\.").replace("!", "\\!").replace("-", "\\-").replace("+", "\\+");
     }
 
     @Override
