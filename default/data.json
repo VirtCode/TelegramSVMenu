@@ -9,6 +9,7 @@
   "menuBlacklist": [],
   "useCustomStrings": false,
   "schedulingHour": 8,
+  "doWeekends": false,
   "enableReload": false,
   "enableDatabase": false,
   "databaseClientURI": "mongodb+srv://<your-database-username>:<your-database-password>@<your-cluster-url-stuff>/<your-database>?retryWrites=true&w=majority",

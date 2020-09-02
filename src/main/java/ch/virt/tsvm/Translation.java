@@ -43,13 +43,15 @@ public class Translation {
     @Expose private String unsubscribeSuccess = "You are not subscribed to the Menu notifications anymore.";
 
     @Expose private String menuOffline = "It seems like the menuplan is offline!\nYou can try again by calling /menu!";
+    @Expose private String menuWeekend = "It seems like there is no Menu on weekends on this Restaurant.";
+
     @Expose private String menuDateFormat = "dd.MM.yy";
     @Expose private String menuAdditional = "Additional: ";
     @Expose private String menuVegetarian = "Is Vegetarian: ";
 
     @Expose private String hostString = "This bot has been set up and is maintained by:\n";
 
-    @Expose private String infoRestaurant = "This bot is linked to";
+    @Expose private String infoRestaurant = "This bot is linked to ";
     @Expose private String infoDomain = "You find the real menuplan at:";
     @Expose private String versionPrefix = "This bot is running on Version: ";
     @Expose private String infoOffline = "Sorry but the restaurant page seems to be offline!";
@@ -76,6 +78,10 @@ public class Translation {
 
     public String getMenuOffline() {
         return menuOffline;
+    }
+
+    public String getMenuWeekend() {
+        return menuWeekend;
     }
 
     public String getMenuDateFormat() {
