@@ -32,6 +32,7 @@ public class Data {
     @Expose private boolean useCustomStrings = false;
 
     @Expose private int schedulingHour = 8;
+    @Expose private boolean doWeekends = false;
 
     @Expose private boolean enableReload = false;
 
@@ -107,6 +108,10 @@ public class Data {
 
     public String getDatabaseClientURI() {
         return databaseClientURI;
+    }
+
+    public boolean isDoWeekends() {
+        return doWeekends;
     }
 
     /**

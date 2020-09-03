@@ -24,7 +24,7 @@ import java.util.*;
  * @version 1.0
  */
 public class Main extends TelegramLongPollingBot {
-    public static final String VERSION_TAG = "Release 2.0";
+    public static final String VERSION_TAG = "Release 2.1";
 
     public static final String TAG = "[MenuBot] ";
 
@@ -78,7 +78,7 @@ public class Main extends TelegramLongPollingBot {
         restaurant = new Restaurant(data.getRestaurantSubDomain());
 
         Calendar now = Calendar.getInstance();
-        now.set(Calendar.HOUR, data.getSchedulingHour());
+        now.set(Calendar.HOUR_OF_DAY, data.getSchedulingHour());
         now.set(Calendar.MINUTE, 0);
         now.set(Calendar.SECOND, 0);
         scheduleSending(incrementDay(now));
@@ -96,6 +96,11 @@ public class Main extends TelegramLongPollingBot {
             @Override
             public void run() {
                 System.out.println(TAG + "Running next Sending");
+                if (!data.isDoWeekends() && isWeekend(Calendar.getInstance())){
+                    scheduleSending(incrementDay(when));
+                    System.out.println(TAG + "Returning because of Weekend");
+                    return;
+                }
                 String menues = fetchMenu(Calendar.getInstance(), true);
                 for (String s : data.getMenuBlacklist()) {
                     if (menues.toLowerCase().contains(s.toLowerCase())) {
@@ -118,6 +123,16 @@ public class Main extends TelegramLongPollingBot {
     private Calendar incrementDay(Calendar day) {
         day.add(Calendar.DATE, 1);
         return day;
+    }
+
+    /**
+     * Check whether it is weekend
+     * @param day to check
+     * @return is weekend
+     */
+    private boolean isWeekend(Calendar day){
+        int weekday = day.get(Calendar.DAY_OF_WEEK);
+        return weekday == Calendar.SATURDAY || weekday == Calendar.SUNDAY;
     }
 
     @Override
@@ -147,7 +162,7 @@ public class Main extends TelegramLongPollingBot {
      * @return cleaned String
      */
     private String cleanString(String s){
-        return s.replace(".", "\\.").replace("!", "\\!").replace("-", "\\-");
+        return s.replace(".", "\\.").replace("!", "\\!").replace("-", "\\-").replace("+", "\\+");
     }
 
     @Override
@@ -224,10 +239,12 @@ public class Main extends TelegramLongPollingBot {
      */
     private String fetchMenu(Calendar date, boolean daily){
         try {
+            if (!daily && isWeekend(date) && !data.isDoWeekends()) return translation.getMenuWeekend();
             restaurant.fetchMenues();
             MenuDay day = restaurant.getMenuWeek().getDay(date.get(Calendar.DATE), date.get(Calendar.MONTH), Calendar.getInstance().get(Calendar.YEAR)); // January = 0
             if (day == null) return translation.getMenuOffline();
             if(daily) database.newMenus(date, day);
+
             StringBuilder sb = new StringBuilder();
             sb.append("__");
             sb.append(new SimpleDateFormat(translation.getMenuDateFormat()).format(date.getTime()));

@@ -19,11 +19,12 @@
   "unsubscribeAlready": "You are not subscribed to the Menu notifications. Use /subscribe to subscribe to it.",
   "unsubscribeSuccess": "You are not subscribed to the Menu notifications anymore.",
   "menuOffline": "It seems like the menuplan is offline!\nYou can try again by calling /menu!",
+  "menuWeekend": "It seems like there is no Menu on weekends on this Restaurant.",
   "menuDateFormat": "dd.MM.yy",
   "menuAdditional": "Additional: ",
   "menuVegetarian": "Is Vegetarian: ",
   "hostString": "This bot has been set up and is maintained by:\n",
-  "infoRestaurant": "This bot is linked to",
+  "infoRestaurant": "This bot is linked to ",
   "infoDomain": "You find the real menuplan at:",
   "versionPrefix": "This bot is running on Version: ",
   "infoOffline": "Sorry but the restaurant page seems to be offline!"
