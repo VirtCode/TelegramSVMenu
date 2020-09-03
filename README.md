@@ -13,7 +13,7 @@ This bot must also be hosted on a device or server. Additionally, this bot is a 
 * All messages of the bot can be configured, allowing to translate it into various languages
 * Allows the host to inject menu data into own database, allowing a recorded history of previous menus
 ## Version
-The most current version is *2.0*
+The most current version is **2.1**
 ## Setup
 ### Download and Installation
 First you need to get your hands on the executable of the Bot.
@@ -24,7 +24,7 @@ When you have got your runnable jar, you should put it into a directory where th
 After that you can execute it via the command line with
 ``` java -jar TelegramSVMenu.jar ```
 
-After the first start, it should create a data.json there you have to first enter your credentials of your [bot](https://core.telegram.org/bots) and then enter your subdomain (```https://[subdomain].sv-restaurant.ch/```) of your restaurant of choice (as shown in the configuration section).
+After the first start, it should create a data.json there you have to first enter your credentials of your [bot](https://core.telegram.org/bots "Official Telegram Docs") and then enter your subdomain (```https://[subdomain].sv-restaurant.ch/```) of your restaurant of choice (as shown in the configuration section).
 You now can use your bot on the default settings.
 ### Configuration
 To configure your bot, you need to edit the already mentioned data.json. In there, it should look like this:
@@ -39,6 +39,7 @@ To configure your bot, you need to edit the already mentioned data.json. In ther
   "printAdditional": false,           //Whether the bot should print the additional information about a menu.
   "menuBlacklist": [],                //Blacklisted keywords to prevent a notification to be sent with a certain menu that contains one of them.
   "useCustomStrings": false,          //Whether the bot should use custom by the host provided strings.
+  "doWeekends": false,                //Whether the bot should send the Menu Notifications on Weekends
   "schedulingHour": 8,                //When the bot should send the notification to the user (Example = 8AM).
   "enableReload": false,              //Whether the /reload command is enabled to read in new config and strings on the go.
   "enableDatabase": false,            //Whether the bot should inject the data into a database
