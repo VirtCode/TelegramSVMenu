@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'ch.virt'
-version '2.1'
+version '2.2'
 
 sourceCompatibility = 1.8
 
@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.VirtCode:SVRestaurantAPI:1.0'
+    compile 'com.github.VirtCode:SVRestaurantAPI:1.1.1'
     compile "org.telegram:telegrambots:4.6"
     compile 'com.google.code.gson:gson:2.8.6'
     compile 'org.mongodb:mongodb-driver-legacy:4.1.0-beta2'

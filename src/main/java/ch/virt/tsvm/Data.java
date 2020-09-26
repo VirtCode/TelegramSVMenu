@@ -1,5 +1,6 @@
 package ch.virt.tsvm;
 
+import ch.virt.svrestaurant.api.UrlManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -21,12 +22,16 @@ public class Data {
     @Expose private String botUsername;
 
     @Expose private String restaurantSubDomain;
+    @Expose private UrlManager.Lang restaurantLang = UrlManager.Lang.ENGLISH;
+    @Expose private String restaurantSubMenuplan;
+
     @Expose private String hostString = "";
 
     @Expose private String[] menuNames = {};
     @Expose private int maxMenues = 10;
 
     @Expose private boolean printAdditional = false;
+    @Expose private boolean printVegetarian = true;
     @Expose private String[] menuBlacklist = {};
 
     @Expose private boolean useCustomStrings = false;
@@ -74,8 +79,12 @@ public class Data {
     }
 
     public String getMenuName(int i) {
-        if (i >= menuNames.length) return "Menu " + i;
+        if (i >= menuNames.length) return "Menu " + (i + 1);
         return menuNames[i];
+    }
+
+    public boolean isPrintVegetarian() {
+        return printVegetarian;
     }
 
     public int getMaxMenues() {
@@ -112,6 +121,14 @@ public class Data {
 
     public boolean isDoWeekends() {
         return doWeekends;
+    }
+
+    public UrlManager.Lang getRestaurantLang() {
+        return restaurantLang;
+    }
+
+    public String getRestaurantSubMenuplan() {
+        return restaurantSubMenuplan;
     }
 
     /**
