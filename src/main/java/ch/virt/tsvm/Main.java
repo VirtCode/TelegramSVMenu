@@ -1,6 +1,7 @@
 package ch.virt.tsvm;
 
 import ch.virt.svrestaurant.api.Restaurant;
+import ch.virt.svrestaurant.api.UrlManager;
 import ch.virt.svrestaurant.api.menu.Menu;
 import ch.virt.svrestaurant.api.menu.MenuDay;
 import org.telegram.telegrambots.ApiContextInitializer;
@@ -74,8 +75,8 @@ public class Main extends TelegramLongPollingBot {
         else translation = new Translation();
 
         this.timer = new Timer();
-
-        restaurant = new Restaurant(data.getRestaurantSubDomain());
+        if (data.getRestaurantSubMenuplan() != null) restaurant = new Restaurant(data.getRestaurantSubDomain(), data.getRestaurantLang(), data.getRestaurantSubMenuplan());
+        else restaurant = new Restaurant(data.getRestaurantSubDomain(), data.getRestaurantLang());
 
         Calendar now = Calendar.getInstance();
         now.set(Calendar.HOUR_OF_DAY, data.getSchedulingHour());
@@ -170,7 +171,7 @@ public class Main extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String message = update.getMessage().getText();
             if (message.startsWith(translation.getCommandIndicator())){
-                System.out.println(TAG + "Command \"" + message.substring(1) + "\" issued from " + update.getMessage().getChat().getFirstName() + "[" + update.getMessage().getChatId() + "]");
+                System.out.println(TAG + "Command \"" + message.substring(1) + "\" issued from " + update.getMessage().getChat().getUserName() + "[" + update.getMessage().getChatId() + "]");
                 processCommand(message.substring(1), update.getMessage().getChatId());
             }
         }
@@ -240,8 +241,8 @@ public class Main extends TelegramLongPollingBot {
     private String fetchMenu(Calendar date, boolean daily){
         try {
             if (!daily && isWeekend(date) && !data.isDoWeekends()) return translation.getMenuWeekend();
-            restaurant.fetchMenues();
-            MenuDay day = restaurant.getMenuWeek().getDay(date.get(Calendar.DATE), date.get(Calendar.MONTH), Calendar.getInstance().get(Calendar.YEAR)); // January = 0
+            restaurant.fetchMenus();
+            MenuDay day = restaurant.getMenuWeek().getDay(date.getTime());
             if (day == null) return translation.getMenuOffline();
             if(daily) database.newMenus(date, day);
 
@@ -250,7 +251,7 @@ public class Main extends TelegramLongPollingBot {
             sb.append(new SimpleDateFormat(translation.getMenuDateFormat()).format(date.getTime()));
             sb.append("__");
             int i = 0;
-            for (Menu menue : day.getMenues()) {
+            for (Menu menue : day.getMenus()) {
                 sb.append(Translation.newLine);
                 sb.append("*");
                 sb.append(data.getMenuName(i));
@@ -266,6 +267,7 @@ public class Main extends TelegramLongPollingBot {
             return translation.getMenuOffline();
         }
     }
+
     /**
      * Converts a Menu to a String
      * @param menu Menu to convert
@@ -276,19 +278,24 @@ public class Main extends TelegramLongPollingBot {
         sb.append(translation.getTabSpaces());
         sb.append(menu.getTitle());
         sb.append(Translation.newLine);
-        sb.append(translation.getTabSpaces());
-        sb.append(menu.getIngredients());
-        sb.append(Translation.newLine);
+        if (menu.getIngredients().length() > 0){
+            sb.append(translation.getTabSpaces());
+            sb.append(menu.getIngredients());
+            sb.append(Translation.newLine);
+        }
         if(data.isPrintAdditional()){
             sb.append(translation.getTabSpaces());
             sb.append(translation.getMenuAdditional());
             sb.append(menu.getAdditionalInfo());
             sb.append(Translation.newLine);
         }
-        sb.append(translation.getTabSpaces());
-        sb.append(translation.getMenuVegetarian());
-        sb.append(menu.isVegetarian());
-        sb.append(Translation.newLine);
+        if (data.isPrintVegetarian()){
+            sb.append(translation.getTabSpaces());
+            sb.append(translation.getMenuVegetarian());
+            sb.append(menu.isVegetarian());
+            sb.append(Translation.newLine);
+        }
+
         return sb.toString();
     }
 
@@ -306,7 +313,7 @@ public class Main extends TelegramLongPollingBot {
                     Translation.newLine +
                     translation.getTabSpaces() +
                     restaurant.getSubdomain() +
-                    Restaurant.URL_SUFFIX;
+                    UrlManager.MAIN_URL;
             sendMessage(sb, group);
         } catch (IOException e) {
             sendMessage(translation.getInfoOffline(), group);

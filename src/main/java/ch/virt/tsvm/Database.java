@@ -74,9 +74,9 @@ public class Database {
         when.set(Calendar.MILLISECOND, 0);
         when.set(Calendar.HOUR_OF_DAY, 0);
 
-        Document[] docs = new Document[menus.getMenues().length];
-        for (int i = 0; i < menus.getMenues().length; i++) {
-            docs[i] = newMenu(when, menus.getMenues(), i);
+        Document[] docs = new Document[menus.getMenus().length];
+        for (int i = 0; i < menus.getMenus().length; i++) {
+            docs[i] = newMenu(when, menus.getMenus(), i);
         }
 
         for (Document doc : docs) {
